@@ -1,5 +1,5 @@
 import { View, Text } from 'react-native'
-import React, { Profiler } from 'react'
+import React from 'react'
 
 const Profile = () => {
   return (
