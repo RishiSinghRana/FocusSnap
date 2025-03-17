@@ -78,11 +78,6 @@ const _layout = () => {
           </>
         )
         }} />
-
-        <Tabs.Screen name = "AddTask"
-        options={{headerShown: false,
-        tabBarButton: () => null
-        }} />
     </Tabs>
   )
 }
