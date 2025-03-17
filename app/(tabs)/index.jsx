@@ -6,34 +6,34 @@ import { useFocusEffect, router } from "expo-router";
 
 const HomeScreen = () => {
   const [tasks, setTasks] = useState([]);
-  const [cumulativeTime, setCumulativeTime] = useState(0);
-  const [activeTaskId, setActiveTaskId] = useState(null);
+  const [cumulativeTime, setcumutime] = useState(0);
+  const [activeTaskId, setactivetaskID] = useState(null);
 
   // Fetch tasks when screen loads
   useFocusEffect(
     React.useCallback(() => {
-      fetchTasks();
+      fetchtasks();
     }, [])
   );
 
   useEffect(() => {
-    loadCumulativeTime();
+    loadtime();
   }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setTasks((prevTasks) =>
         prevTasks.map((task) =>
-          task.isRunning ? { ...task, timeSpent: task.timeSpent + 1 } : task
+          task.isRunning ? { ...task, tspent: task.tspent + 1 } : task
         )
       );
-      setCumulativeTime((prevTime) => prevTime + (activeTaskId ? 1 : 0));
+      setcumutime((prevTime) => prevTime + (activeTaskId ? 1 : 0));
     }, 1000);
 
     return () => clearInterval(interval);
   }, [activeTaskId]);
 
-  const fetchTasks = async () => {
+  const fetchtasks = async () => {
     try {
       const savedTasks = await AsyncStorage.getItem("tasks");
       setTasks(savedTasks ? JSON.parse(savedTasks) : []);
@@ -42,9 +42,9 @@ const HomeScreen = () => {
     }
   };
 
-  const loadCumulativeTime = async () => {
+  const loadtime = async () => {
     const storedTime = await AsyncStorage.getItem("cumulativeTime");
-    if (storedTime) setCumulativeTime(parseInt(storedTime));
+    if (storedTime) setcumutime(parseInt(storedTime));
   };
 
   const saveTasks = async (updatedTasks) => {
@@ -60,7 +60,7 @@ const HomeScreen = () => {
 
     let result = await ImagePicker.launchCameraAsync({ allowsEditing: true, quality: 1 });
     if (!result.cancelled) {
-      setActiveTaskId(id);
+      setactivetaskID(id);
       setTasks((prev) =>
         prev.map((task) =>
           task.id === id ? { ...task, isRunning: true, hasStartedOnce: true, photo: result.assets[0].uri } : task
@@ -70,7 +70,7 @@ const HomeScreen = () => {
   };
 
   const stopTask = (id) => {
-    setActiveTaskId(null);
+    setactivetaskID(null);
     setTasks((prev) =>
       prev.map((task) => (task.id === id ? { ...task, isRunning: false } : task))
     );
@@ -82,14 +82,14 @@ const HomeScreen = () => {
       return;
     }
 
-    setActiveTaskId(id);
+    setactivetaskID(id);
     setTasks((prev) =>
       prev.map((task) => (task.id === id ? { ...task, isRunning: true } : task))
     );
   };
 
   const deleteTask = async (id) => {
-    if (activeTaskId === id) setActiveTaskId(null);
+    if (activeTaskId === id) setactivetaskID(null);
     const updatedTasks = tasks.filter((task) => task.id !== id);
     await saveTasks(updatedTasks);
   };
@@ -107,7 +107,7 @@ const HomeScreen = () => {
           <View className="bg-gray-800 p-4 mb-3 rounded-lg flex-row justify-between items-center">
             <View>
               <Text className="text-white text-lg">{item.name}</Text>
-              <Text className="text-gray-400">{item.timeSpent}s</Text>
+              <Text className="text-gray-400">{item.tspent}s</Text>
             </View>
 
             {item.photo ? (
