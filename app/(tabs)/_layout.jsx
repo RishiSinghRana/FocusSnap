@@ -3,7 +3,6 @@ import homeIcon from "../../assets/images/home.png";
 import profileIcon from "../../assets/images/profile.png";
 import calendarIcon from "../../assets/images/calendar.png";
 import settingsIcon from "../../assets/images/settings.png";
-import detailsIcon from "../../assets/images/details.png";
 import historyIcon from "../../assets/images/history.png"
 
 
@@ -56,18 +55,7 @@ const _layout = () => {
           </>
         )
         }} />
-
-        <Tabs.Screen name="TaskDetail"
-        options={{title: 'Details', 
-        headerShown: false,
-        tabBarIcon :({ focused }) => (
-          <>
-            <ImageBackground 
-            source={detailsIcon} className='w-7 h-7 mt-2 mr-1'/>
-          </>
-        )
-        }} />
-
+        
         <Tabs.Screen name="TaskHistory"
         options={{title: 'History', 
         headerShown: false,
