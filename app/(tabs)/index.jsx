@@ -7,17 +7,17 @@ import dayjs from "dayjs";
 
 const HomeScreen = () => {
   const [tasks, setTasks] = useState([]);
-  const [cumulativeTime, setCumulativeTime] = useState(0);
-  const [activeTaskId, setActiveTaskID] = useState(null);
+  const [totalTime, setTotalTime] = useState(0);
+  const [activeId, setActiveId] = useState(null);
 
   useFocusEffect(
     React.useCallback(() => {
-      fetchTasks();
+      getTasks();
     }, [])
   );
 
   useEffect(() => {
-    loadCumulativeTime();
+    loadTotalTime();
   }, []);
 
   useEffect(() => {
@@ -27,13 +27,13 @@ const HomeScreen = () => {
           task.isRunning ? { ...task, tspent: task.tspent + 1 } : task
         )
       );
-      setCumulativeTime((prevTime) => prevTime + (activeTaskId ? 1 : 0));
+      setTotalTime((prevTime) => prevTime + (activeId ? 1 : 0));
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [activeTaskId]);
+  }, [activeId]);
 
-  const fetchTasks = async () => {
+  const getTasks = async () => {
     try {
       const savedTasks = await AsyncStorage.getItem("tasks");
       const parsedTasks = savedTasks ? JSON.parse(savedTasks) : [];
@@ -43,25 +43,25 @@ const HomeScreen = () => {
     }
   };
 
-  const loadCumulativeTime = async () => {
+  const loadTotalTime = async () => {
     const storedTime = await AsyncStorage.getItem("cumulativeTime");
-    if (storedTime) setCumulativeTime(parseInt(storedTime));
+    if (storedTime) setTotalTime(parseInt(storedTime));
   };
 
-  const saveTasks = async (updatedTasks) => {
+  const storeTasks = async (updatedTasks) => {
     setTasks(updatedTasks);
     await AsyncStorage.setItem("tasks", JSON.stringify(updatedTasks));
   };
 
-  const startTask = async (id) => {
-    if (activeTaskId !== null) {
+  const beginTask = async (id) => {
+    if (activeId !== null) {
       Alert.alert("Stop current task first!", "Only one task can run at a time.");
       return;
     }
 
     let result = await ImagePicker.launchCameraAsync({ allowsEditing: true, quality: 1 });
     if (!result.canceled) {
-      setActiveTaskID(id);
+      setActiveId(id);
       setTasks((prev) =>
         prev.map((task) =>
           task.id === id ? { ...task, isRunning: true, hasStartedOnce: true, photo: result.assets[0].uri } : task
@@ -70,49 +70,49 @@ const HomeScreen = () => {
     }
   };
 
-  const stopTask = (id) => {
-    setActiveTaskID(null);
+  const endTask = (id) => {
+    setActiveId(null);
     setTasks((prev) =>
       prev.map((task) => (task.id === id ? { ...task, isRunning: false } : task))
     );
   };
 
-  const resumeTask = (id) => {
-    if (activeTaskId !== null) {
+  const contTask = (id) => {
+    if (activeId !== null) {
       Alert.alert("Stop current task first!", "Only one task can run at a time.");
       return;
     }
 
-    setActiveTaskID(id);
+    setActiveId(id);
     setTasks((prev) =>
       prev.map((task) => (task.id === id ? { ...task, isRunning: true } : task))
     );
   };
 
-  const deleteTask = async (id) => {
-    if (activeTaskId === id) setActiveTaskID(null);
+  const remTask = async (id) => {
+    if (activeId === id) setActiveId(null);
     const updatedTasks = tasks.filter((task) => task.id !== id);
-    await saveTasks(updatedTasks);
+    await storeTasks(updatedTasks);
   };
 
-  const editTask = (task) => {
+  const modTask = (task) => {
     router.push({ pathname: "../components/EditTask", params: task });
   };
 
   const today = dayjs().format("YYYY-MM-DD");
-  const todayTasks = tasks.filter((task) => dayjs(task.date).isSame(today, "day"));
-  const futureTasks = tasks.filter((task) => dayjs(task.date).isAfter(today, "day"));
+  const todayList = tasks.filter((task) => dayjs(task.date).isSame(today, "day"));
+  const futureList = tasks.filter((task) => dayjs(task.date).isAfter(today, "day"));
 
   return (
     <View className="flex-1 bg-gray-900 p-5">
       <Text className="text-white text-2xl font-bold text-center mb-5">
-        Total Time: {cumulativeTime}s
+        Total Time: {totalTime}s
       </Text>
 
       {/* Today's Tasks Section */}
       <Text className="text-white text-lg font-bold mb-3">Today's Tasks</Text>
       <FlatList
-        data={todayTasks}
+        data={todayList}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <View className="bg-gray-800 p-4 mb-3 rounded-lg flex-row justify-between items-center">
@@ -124,13 +124,13 @@ const HomeScreen = () => {
             </View>
 
             {/* Edit Button */}
-            <TouchableOpacity onPress={() => editTask(item)}>
+            <TouchableOpacity onPress={() => modTask(item)}>
               <Text className="text-yellow-400">✏ Edit</Text>
             </TouchableOpacity>
 
             {/* Remove Button - Only if task is stopped */}
             {!item.isRunning && (
-              <TouchableOpacity onPress={() => deleteTask(item.id)}>
+              <TouchableOpacity onPress={() => remTask(item.id)}>
                 <Text className="text-gray-400">🗑 Remove</Text>
               </TouchableOpacity>
             )}
@@ -140,19 +140,19 @@ const HomeScreen = () => {
             ) : null}
 
             {!item.hasStartedOnce && (
-              <TouchableOpacity onPress={() => startTask(item.id)}>
+              <TouchableOpacity onPress={() => beginTask(item.id)}>
                 <Text className="text-blue-400">📸 Start</Text>
               </TouchableOpacity>
             )}
 
             {item.isRunning && (
-              <TouchableOpacity onPress={() => stopTask(item.id)}>
+              <TouchableOpacity onPress={() => endTask(item.id)}>
                 <Text className="text-red-400">⏹ Stop</Text>
               </TouchableOpacity>
             )}
 
             {!item.isRunning && item.hasStartedOnce && (
-              <TouchableOpacity onPress={() => resumeTask(item.id)}>
+              <TouchableOpacity onPress={() => contTask(item.id)}>
                 <Text className="text-green-400">▶ Resume</Text>
               </TouchableOpacity>
             )}
@@ -161,11 +161,11 @@ const HomeScreen = () => {
       />
 
       {/* Future Tasks Section */}
-      {futureTasks.length > 0 && (
+      {futureList.length > 0 && (
         <>
           <Text className="text-white text-lg font-bold mt-5 mb-3">Future Tasks</Text>
           <FlatList
-            data={futureTasks}
+            data={futureList}
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
               <View className="bg-gray-800 p-4 mb-3 rounded-lg flex-row justify-between items-center">
@@ -176,12 +176,12 @@ const HomeScreen = () => {
                 </View>
 
                 {/* Edit Button */}
-                <TouchableOpacity onPress={() => editTask(item)}>
+                <TouchableOpacity onPress={() => modTask(item)}>
                   <Text className="text-yellow-400">✏ Edit</Text>
                 </TouchableOpacity>
 
                 {/* Remove Button */}
-                <TouchableOpacity onPress={() => deleteTask(item.id)}>
+                <TouchableOpacity onPress={() => remTask(item.id)}>
                   <Text className="text-gray-400">🗑 Remove</Text>
                 </TouchableOpacity>
               </View>

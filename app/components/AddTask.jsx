@@ -5,38 +5,34 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
 const AddTask = () => {
-  const [taskName, setTaskname] = useState("");
+  const [tName, setTName] = useState("");
   const [taskDescription, setTaskdesc] = useState("");
   const [taskDate, setTaskdate] = useState(new Date());
   const [compdate, setCompdate] = useState(new Date());
-  const [showdatepicker, setDatepicker] = useState(false);
-  const [showcompdatePicker, setCompdatepicker] = useState(false);
+  const [showDatePick, setDatePick] = useState(false);
+  const [showCompPick, setCompPick] = useState(false);
 
-  const formatdate = (date) => date.toISOString().split("T")[0];
+  const formatDate = (date) => date.toISOString().split("T")[0];
 
-  const handleSavetask = async () => {
-    if (!taskName.trim()) {
+  const saveTask = async () => {
+    if (!tName.trim()) {
       Alert.alert("Error", "Task name cannot be empty.");
       return;
     }
-
     try {
       const existingTasks = await AsyncStorage.getItem("tasks");
       const tasks = existingTasks ? JSON.parse(existingTasks) : [];
-
       const newTask = {
         id: Date.now(),
-        name: taskName.trim(),
+        name: tName.trim(),
         description: taskDescription.trim(),
-        date: formatdate(taskDate),
-        compdate: formatdate(compdate),
+        date: formatDate(taskDate),
+        compdate: formatDate(compdate),
         isRunning: false,
         elapsedTime: 0,
       };
-
       tasks.push(newTask);
       await AsyncStorage.setItem("tasks", JSON.stringify(tasks));
-
       Alert.alert("Success", "Task added successfully!");
       router.replace("/");
     } catch (error) {
@@ -47,15 +43,13 @@ const AddTask = () => {
   return (
     <View className="flex-1 bg-gray-900 p-5">
       <Text className="text-white text-2xl font-bold text-center mb-5">Add New Task</Text>
-
       <TextInput
         className="bg-gray-800 text-white p-3 rounded-lg mb-3"
         placeholder="Enter Task Name"
         placeholderTextColor="#ccc"
-        value={taskName}
-        onChangeText={setTaskname}
+        value={tName}
+        onChangeText={setTName}
       />
-
       <TextInput
         className="bg-gray-800 text-white p-3 rounded-lg mb-3"
         placeholder="Enter Task Description"
@@ -64,38 +58,35 @@ const AddTask = () => {
         onChangeText={setTaskdesc}
         multiline
       />
-
-      <TouchableOpacity onPress={() => setDatepicker(true)} className="bg-blue-600 p-3 rounded-lg mb-3">
-        <Text className="text-white text-center">📅 Task Date: {formatdate(taskDate)}</Text>
+      <TouchableOpacity onPress={() => setDatePick(true)} className="bg-blue-600 p-3 rounded-lg mb-3">
+        <Text className="text-white text-center">📅 Task Date: {formatDate(taskDate)}</Text>
       </TouchableOpacity>
-      {showdatepicker && (
+      {showDatePick && (
         <DateTimePicker
           value={taskDate}
           mode="date"
           display="default"
           onChange={(event, selectedDate) => {
-            setDatepicker(false);
+            setDatePick(false);
             if (selectedDate) setTaskdate(selectedDate);
           }}
         />
       )}
-
-      <TouchableOpacity onPress={() => setCompdatepicker(true)} className="bg-green-600 p-3 rounded-lg mb-3">
-        <Text className="text-white text-center">✅ Completion Date: {formatdate(compdate)}</Text>
+      <TouchableOpacity onPress={() => setCompPick(true)} className="bg-green-600 p-3 rounded-lg mb-3">
+        <Text className="text-white text-center">✅ Completion Date: {formatDate(compdate)}</Text>
       </TouchableOpacity>
-      {showcompdatePicker && (
+      {showCompPick && (
         <DateTimePicker
           value={compdate}
           mode="date"
           display="default"
           onChange={(event, selectedDate) => {
-            setCompdatepicker(false);
+            setCompPick(false);
             if (selectedDate) setCompdate(selectedDate);
           }}
         />
       )}
-
-      <TouchableOpacity onPress={handleSavetask} className="bg-purple-600 p-3 rounded-lg mt-5">
+      <TouchableOpacity onPress={saveTask} className="bg-purple-600 p-3 rounded-lg mt-5">
         <Text className="text-white text-center text-lg">💾 Save Task</Text>
       </TouchableOpacity>
     </View>

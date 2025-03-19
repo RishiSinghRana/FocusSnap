@@ -7,31 +7,28 @@ import dayjs from "dayjs";
 
 const EditTask = () => {
   const task = useLocalSearchParams(); // Get task from params
-
-  const [taskName, setTaskName] = useState(task.name);
-  const [taskDescription, setTaskDescription] = useState(task.description);
+  const [tName, setTaskName] = useState(task.name);
+  const [taskDesc, setTaskDesc] = useState(task.description);
   const [taskDate, setTaskDate] = useState(dayjs(task.date).toDate());
-  const [completionDate, setCompletionDate] = useState(dayjs(task.completionDate).toDate());
-  const [showTaskDatePicker, setShowTaskDatePicker] = useState(false);
-  const [showCompletionDatePicker, setShowCompletionDatePicker] = useState(false);
+  const [compDate, setCompDate] = useState(dayjs(task.completionDate).toDate());
+  const [showTDatePick, setTDatePick] = useState(false);
+  const [showCompPick, setCompPick] = useState(false);
 
-  const handleUpdateTask = async () => {
+  const updateTask = async () => {
     try {
       const storedTasks = await AsyncStorage.getItem("tasks");
       const tasks = storedTasks ? JSON.parse(storedTasks) : [];
-
       const updatedTasks = tasks.map((t) =>
         t.id === task.id
           ? {
               ...t,
-              name: taskName,
-              description: taskDescription,
+              name: tName,
+              description: taskDesc,
               date: dayjs(taskDate).format("YYYY-MM-DD"),
-              completionDate: dayjs(completionDate).format("YYYY-MM-DD"),
+              completionDate: dayjs(compDate).format("YYYY-MM-DD"),
             }
           : t
       );
-
       await AsyncStorage.setItem("tasks", JSON.stringify(updatedTasks));
       Alert.alert("Success", "Task updated successfully!");
       router.replace("/");
@@ -43,56 +40,52 @@ const EditTask = () => {
   return (
     <View className="flex-1 bg-gray-900 p-5">
       <Text className="text-white text-2xl font-bold text-center mb-5">Edit Task</Text>
-
       <TextInput
         className="bg-gray-800 text-white p-3 rounded-lg mb-3"
-        value={taskName}
+        value={tName}
         onChangeText={setTaskName}
       />
       <TextInput
         className="bg-gray-800 text-white p-3 rounded-lg mb-3"
-        value={taskDescription}
-        onChangeText={setTaskDescription}
+        value={taskDesc}
+        onChangeText={setTaskDesc}
         multiline
       />
-
       {/* Task Date Picker */}
-      <TouchableOpacity onPress={() => setShowTaskDatePicker(true)} className="bg-blue-600 p-3 rounded-lg mb-3">
+      <TouchableOpacity onPress={() => setTDatePick(true)} className="bg-blue-600 p-3 rounded-lg mb-3">
         <Text className="text-white text-center">
           Task Date: {dayjs(taskDate).format("YYYY-MM-DD")}
         </Text>
       </TouchableOpacity>
-      {showTaskDatePicker && (
+      {showTDatePick && (
         <DateTimePicker
           value={taskDate}
           mode="date"
           display="default"
           onChange={(event, date) => {
-            setShowTaskDatePicker(false);
+            setTDatePick(false);
             if (date) setTaskDate(date);
           }}
         />
       )}
-
       {/* Completion Date Picker */}
-      <TouchableOpacity onPress={() => setShowCompletionDatePicker(true)} className="bg-green-600 p-3 rounded-lg mb-3">
+      <TouchableOpacity onPress={() => setCompPick(true)} className="bg-green-600 p-3 rounded-lg mb-3">
         <Text className="text-white text-center">
-          Completion Date: {dayjs(completionDate).format("YYYY-MM-DD")}
+          Completion Date: {dayjs(compDate).format("YYYY-MM-DD")}
         </Text>
       </TouchableOpacity>
-      {showCompletionDatePicker && (
+      {showCompPick && (
         <DateTimePicker
-          value={completionDate}
+          value={compDate}
           mode="date"
           display="default"
           onChange={(event, date) => {
-            setShowCompletionDatePicker(false);
-            if (date) setCompletionDate(date);
+            setCompPick(false);
+            if (date) setCompDate(date);
           }}
         />
       )}
-
-      <TouchableOpacity onPress={handleUpdateTask} className="bg-purple-600 p-3 rounded-lg mt-5">
+      <TouchableOpacity onPress={updateTask} className="bg-purple-600 p-3 rounded-lg mt-5">
         <Text className="text-white text-center text-lg">Update Task</Text>
       </TouchableOpacity>
     </View>
