@@ -24,7 +24,9 @@ const HomeScreen = () => {
     const interval = setInterval(() => {
       setTasks((prevTasks) =>
         prevTasks.map((task) =>
-          task.isRunning ? { ...task, tspent: task.tspent + 1 } : task
+          task.isRunning
+          ? { ...task, tspent: (task.tspent ?? 0) + 1 }
+          : task
         )
       );
       setTotalTime((prevTime) => prevTime + (activeId ? 1 : 0));
@@ -36,7 +38,7 @@ const HomeScreen = () => {
   const getTasks = async () => {
     try {
       const savedTasks = await AsyncStorage.getItem("tasks");
-      const parsedTasks = savedTasks ? JSON.parse(savedTasks) : [];
+      const parsedTasks = savedTasks ? JSON.parse(savedTasks) : [];      
       setTasks(parsedTasks);
     } catch (error) {
       console.error("Error fetching tasks", error);
@@ -77,16 +79,24 @@ const HomeScreen = () => {
     );
   };
 
-  const contTask = (id) => {
+  const contTask = async (id) => {
     if (activeId !== null) {
       Alert.alert("Stop current task first!", "Only one task can run at a time.");
       return;
     }
-
-    setActiveId(id);
-    setTasks((prev) =>
-      prev.map((task) => (task.id === id ? { ...task, isRunning: true } : task))
-    );
+  
+    let result = await ImagePicker.launchCameraAsync({ allowsEditing: true, quality: 1 });
+  
+    if (!result.canceled) {
+      setActiveId(id);
+      setTasks((prev) =>
+        prev.map((task) =>
+          task.id === id
+            ? { ...task, isRunning: true, photo: result.assets[0].uri } // Update photo when resuming
+            : task
+        )
+      );
+    }
   };
 
   const remTask = async (id) => {
@@ -172,7 +182,7 @@ const HomeScreen = () => {
                 <View>
                   <Text className="text-white text-lg">{item.name}</Text>
                   <Text className="text-gray-400">Start Date: {dayjs(item.date).format("DD MMM YYYY")}</Text>
-                  <Text className="text-gray-400">Completion Date: {dayjs(item.completionDate).format("DD MMM YYYY")}</Text>
+                  <Text className="text-gray-400">Completion Date: {dayjs(item.compdate).format("DD MMM YYYY")}</Text>
                 </View>
 
                 {/* Edit Button */}

@@ -10,7 +10,7 @@ const EditTask = () => {
   const [tName, setTaskName] = useState(task.name);
   const [taskDesc, setTaskDesc] = useState(task.description);
   const [taskDate, setTaskDate] = useState(dayjs(task.date).toDate());
-  const [compDate, setCompDate] = useState(dayjs(task.completionDate).toDate());
+  const [compDate, setCompDate] = useState(dayjs(task.compdate).toDate());
   const [showTDatePick, setTDatePick] = useState(false);
   const [showCompPick, setCompPick] = useState(false);
 
@@ -18,17 +18,18 @@ const EditTask = () => {
     try {
       const storedTasks = await AsyncStorage.getItem("tasks");
       const tasks = storedTasks ? JSON.parse(storedTasks) : [];
+  
       const updatedTasks = tasks.map((t) =>
-        t.id === task.id
+        t.id === Number(task.id)
           ? {
               ...t,
               name: tName,
               description: taskDesc,
               date: dayjs(taskDate).format("YYYY-MM-DD"),
-              completionDate: dayjs(compDate).format("YYYY-MM-DD"),
+              compdate: dayjs(compDate).format("YYYY-MM-DD"),
             }
           : t
-      );
+      );  
       await AsyncStorage.setItem("tasks", JSON.stringify(updatedTasks));
       Alert.alert("Success", "Task updated successfully!");
       router.replace("/");
@@ -36,6 +37,7 @@ const EditTask = () => {
       console.error("Error updating task", error);
     }
   };
+  
 
   return (
     <View className="flex-1 bg-gray-900 p-5">
