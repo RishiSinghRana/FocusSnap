@@ -71,8 +71,8 @@ storage/
 
 1. **Clone this repo**  
 ```bash
-git clone https://github.com/your-username/task-timer-app.git
-cd task-timer-app
+git clone https://github.com/RishiSinghRana/FocusSnap.git
+cd FocusSnap
 ```
 
 2. **Install dependencies**  
@@ -116,6 +116,7 @@ This project is licensed under the MIT License.
 
 ## 💬 Contact
 
-Created with ❤️ by Rishi Singh Rana  
+Created with ❤️ by Rishi Singh Rana
+Shoutout 🎉 to Ayush Kaushik for the contribution in TaskHistory Functionality
 📧 rishisinghrana08@gmail.com  
 🔗 [LinkedIn](https://www.linkedin.com/in/rishi-singh-rana-43ab78288) | [GitHub](https://github.com/RishiSinghRana)
