@@ -6,7 +6,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import dayjs from "dayjs";
 
 const EditTask = () => {
-  const task = useLocalSearchParams(); // Get task from params
+  const task = useLocalSearchParams();
   const [tName, setTaskName] = useState(task.name);
   const [taskDesc, setTaskDesc] = useState(task.description);
   const [taskDate, setTaskDate] = useState(dayjs(task.date).toDate());
@@ -42,11 +42,13 @@ const EditTask = () => {
   return (
     <View className="flex-1 bg-gray-900 p-5">
       <Text className="text-white text-2xl font-bold text-center mb-5">Edit Task</Text>
+      {/*Task Name */}
       <TextInput
         className="bg-gray-800 text-white p-3 rounded-lg mb-3"
         value={tName}
         onChangeText={setTaskName}
       />
+      {/*Task Description */}
       <TextInput
         className="bg-gray-800 text-white p-3 rounded-lg mb-3"
         value={taskDesc}

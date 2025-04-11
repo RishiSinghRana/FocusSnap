@@ -92,7 +92,7 @@ const HomeScreen = () => {
       setTasks((prev) =>
         prev.map((task) =>
           task.id === id
-            ? { ...task, isRunning: true, photo: result.assets[0].uri } // Update photo when resuming
+            ? { ...task, isRunning: true, photo: result.assets[0].uri }
             : task
         )
       );
