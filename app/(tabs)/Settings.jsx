@@ -1,6 +1,6 @@
-import { View, Text, Switch, TouchableOpacity, Alert } from "react-native";
+import { View, Text, Switch, TouchableOpacity, Alert, Appearance } from "react-native";
 import React, { useState, useEffect } from "react";
-import tw from "twrnc";
+import tw, { useDeviceContext } from "twrnc";
 import RNPickerSelect from "react-native-picker-select";
 import * as SecureStore from "expo-secure-store";
 
@@ -8,6 +8,8 @@ const Settings = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const [language, setLanguage] = useState("en");
+    useDeviceContext(tw);
+
   const [dailyGoal, setDailyGoal] = useState(30);
   const [selectedSound, setSelectedSound] = useState("default");
 
@@ -89,7 +91,12 @@ const Settings = () => {
       {/* Light Mode Toggle */}
       <View style={tw`flex-row justify-between items-center mb-4`}>
         <Text style={tw`text-lg text-gray-700 dark:text-white`}>Dark Mode</Text>
-        <Switch value={isDarkMode} onValueChange={setIsDarkMode} />
+        <Switch
+          value={isDarkMode}
+          onValueChange={(value) => {
+            setIsDarkMode(value);
+          }}
+        />
       </View>
 
       {/* Notifications Toggle */}

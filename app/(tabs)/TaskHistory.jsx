@@ -16,6 +16,16 @@ const TaskHistory = () => {
   const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
+    const dummyTask = {
+      name: "Dummy Task",
+      date: "2024-01-01",
+      duration: 60,
+    };
+    
+    const isDummyPresent = tasks.some(task => task.name === "Dummy Task");
+    if (!isDummyPresent){
+        setTasks(prevTasks => [...prevTasks, dummyTask]);
+    }
     loadTaskHistory();
   }, []);
 

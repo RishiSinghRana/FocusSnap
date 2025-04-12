@@ -18,6 +18,22 @@ const HomeScreen = () => {
 
   useEffect(() => {
     loadTotalTime();
+    const dummyTask = {
+      id: -1, 
+      name: "Dummy Task",
+      date: "2024-01-01",
+      compdate: "2024-01-01",
+      completionDate: "2024-01-01",
+      duration: 60,
+      tspent: 0,
+      isRunning: false,
+      hasStartedOnce: false,
+      photo: null,
+    };
+
+    if (!tasks.some((task) => task.id === -1)) {
+      setTasks([dummyTask, ...tasks]);
+    }
   }, []);
 
   useEffect(() => {
@@ -38,7 +54,7 @@ const HomeScreen = () => {
   const getTasks = async () => {
     try {
       const savedTasks = await AsyncStorage.getItem("tasks");
-      const parsedTasks = savedTasks ? JSON.parse(savedTasks) : [];      
+      const parsedTasks = savedTasks ? JSON.parse(savedTasks) : [];
       setTasks(parsedTasks);
     } catch (error) {
       console.error("Error fetching tasks", error);
@@ -67,7 +83,13 @@ const HomeScreen = () => {
       setTasks((prev) =>
         prev.map((task) =>
           task.id === id ? { ...task, isRunning: true, hasStartedOnce: true, photo: result.assets[0].uri } : task
-        )
+        ).map((t) => {
+          if (t.id === -1) {
+            return { ...t, hasStartedOnce: false };
+          } else {
+            return t;
+          }
+        })
       );
     }
   };
@@ -84,11 +106,16 @@ const HomeScreen = () => {
       Alert.alert("Stop current task first!", "Only one task can run at a time.");
       return;
     }
-  
+
     let result = await ImagePicker.launchCameraAsync({ allowsEditing: true, quality: 1 });
-  
+
     if (!result.canceled) {
       setActiveId(id);
+      if (id === -1) {
+        setTasks((prev) => prev.map((t) => {
+          return t.id === -1 ? {...t, isRunning: true}: t
+        }));
+      }
       setTasks((prev) =>
         prev.map((task) =>
           task.id === id
@@ -110,8 +137,11 @@ const HomeScreen = () => {
   };
 
   const today = dayjs().format("YYYY-MM-DD");
-  const todayList = tasks.filter((task) => dayjs(task.date).isSame(today, "day"));
-  const futureList = tasks.filter((task) => dayjs(task.date).isAfter(today, "day"));
+  const todayList = tasks.filter((task) => task.id === -1 || dayjs(task.date).isSame(today, "day"));
+  const futureList = tasks.filter(
+    (task) => task.id !== -1 && dayjs(task.date).isAfter(today, "day")
+  );
+
 
   return (
     <View className="flex-1 bg-gray-900 p-5">
@@ -123,8 +153,16 @@ const HomeScreen = () => {
       <Text className="text-white text-lg font-bold mb-3">Today's Tasks</Text>
       <FlatList
         data={todayList}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
+        keyExtractor={(item, index) => (item.id === -1 ? 'dummy' : item.id.toString())}
+        renderItem={({ item }) =>
+          item.id === -1 ? (
+            <View className="bg-gray-800 p-4 mb-3 rounded-lg flex-row justify-between items-center">
+              <View>
+                <Text className="text-white text-lg">{item.name}</Text>
+                <Text className="text-gray-400">Date: {dayjs(item.date).format("DD MMM YYYY")}</Text>
+              </View>
+            </View>
+          ) : (
           <View className="bg-gray-800 p-4 mb-3 rounded-lg flex-row justify-between items-center">
             <View>
               <Text className="text-white text-lg">{item.name}</Text>
@@ -166,9 +204,10 @@ const HomeScreen = () => {
                 <Text className="text-green-400">▶ Resume</Text>
               </TouchableOpacity>
             )}
-          </View>
-        )}
-      />
+          </View>)
+
+        } />
+
 
       {/* Future Tasks Section */}
       {futureList.length > 0 && (
