@@ -200,7 +200,7 @@ const Settings = () => {
 
       {/* Developer Credits */}
       <View className="border-t border-gray-700 pt-4">
-        <Text className="text-gray-400 text-center">Made with 💙 by Rishi Singh Rana</Text>
+        <Text className="text-gray-400 text-center">Made with 💙 </Text>
       </View>
     </ScrollView>
   );

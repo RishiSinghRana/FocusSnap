@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ScrollView } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Calendar as RNCalendar } from "react-native-calendars";
 import dayjs from "dayjs";
@@ -22,6 +22,7 @@ const Calendar = () => {
 
     const dayTotals = {};
     let yearTotal = 0;
+    const dayTasks = {};
 
     tasks.forEach((task) => {
       if (!task?.timeLogs || !task?.startDate) return;
@@ -30,9 +31,10 @@ const Calendar = () => {
       const taskYear = dayjs(task.startDate).format("YYYY");
 
       const totalTime = task.timeLogs.reduce((acc, log) => acc + (log?.duration || 0), 0);
-
+      
       // Day
       dayTotals[taskDate] = (dayTotals[taskDate] || 0) + totalTime;
+      dayTasks[taskDate] = (dayTasks[taskDate] || 0) + 1;
 
       // Year
       if (dayjs().format("YYYY") === taskYear) {
@@ -45,6 +47,7 @@ const Calendar = () => {
       markDates[date] = {
         marked: true,
         dotColor: "orange",
+        time: dayTotals[date], // Add the time to markedDates
       };
     }
 
@@ -59,7 +62,7 @@ const Calendar = () => {
     const total = Object.entries(timeData)
       .filter(([date]) => date.startsWith(month))
       .reduce((sum, [_, t]) => sum + t, 0);
-    setMonthlyTotal(total);
+      setMonthlyTotal(total);
   };
 
   const updateSelectedTotal = (date, timeData) => {
@@ -71,28 +74,57 @@ const Calendar = () => {
     setSelectedDate(date);
     updateMonthlyTotal(date.slice(0, 7), dailyTime);
     updateSelectedTotal(date, dailyTime);
+    // No need to manually update markedDates here, it's done in loadTaskData
   };
 
   const formatTime = (seconds) => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    return `${hrs}h ${mins}m`;
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const formattedHours = hours.toString().padStart(2, "0");
+    const formattedMinutes = minutes.toString().padStart(2, "0");
+    return `${formattedHours}h ${formattedMinutes}m`;
   };
+
+  const renderDay = (props) => {
+    const { date, state } = props;
+    const dateString = dayjs(date.dateString).format("YYYY-MM-DD"); // Use date.dateString
+    const isSelected = dateString === selectedDate;
+    const hasData = markedDates[dateString];
+
+    return (
+    <View>
+      <TouchableOpacity
+          style={{
+            alignItems: "center",
+            justifyContent: "center",
+            width: 38,
+            height: 38,
+            ...(isSelected && { backgroundColor: "#3b82f6", borderRadius: 19 }),
+          }}
+          onPress={() => onDayPress({ dateString })}
+        >
+          <Text style={{ color: isSelected ? "white" : state === "disabled" ? "gray" : "white" }}>
+            {date.day}
+          </Text>
+        </TouchableOpacity>
+        {hasData?.time !== undefined && (
+            <View style={{ alignItems: "center" }}>
+              <Text style={{ fontSize: 10, color: isSelected ? "white" : "lightgray" }}>
+                {formatTime(hasData.time)}
+              </Text>
+            </View>
+          )}
+      </View>
+      );
+  };
+
+
 
   return (
     <ScrollView className="flex-1 bg-gray-900 p-5">
       <Text className="text-white text-2xl font-bold mb-4 text-center">Calendar</Text>
       <RNCalendar
-        onDayPress={onDayPress}
-        markedDates={{
-          ...markedDates,
-          [selectedDate]: {
-            selected: true,
-            selectedColor: "blue",
-            marked: true,
-            dotColor: "orange",
-          },
-        }}
+        dayComponent={renderDay}
         theme={{
           calendarBackground: "#1f2937",
           dayTextColor: "#fff",
@@ -102,8 +134,8 @@ const Calendar = () => {
           selectedDayTextColor: "#fff",
           arrowColor: "#fff",
         }}
+        markedDates={{ ...markedDates }}
       />
-
       <View className="mt-6 bg-gray-800 rounded-lg p-4">
         <Text className="text-white text-lg font-bold mb-2">Stats</Text>
         <Text className="text-gray-300">📅 Selected Day: {formatTime(selectedTotal)}</Text>
