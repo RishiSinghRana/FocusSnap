@@ -4,8 +4,6 @@ import { View, Text, TouchableOpacity, ScrollView, Alert, Image } from "react-na
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LineChart } from "react-native-chart-kit";
 import { Dimensions } from "react-native";
-import * as FileSystem from "expo-file-system";
-import * as Sharing from "expo-sharing";
 import dayjs from "dayjs";
 import { useRouter } from "expo-router";
 
@@ -13,7 +11,6 @@ const screenWidth = Dimensions.get("window").width;
 
 const TaskHistory = () => {
   const [tasks, setTasks] = useState([]);
-  const [exporting, setExporting] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -53,29 +50,14 @@ const TaskHistory = () => {
     return maxStreak;
   };
 
-  const exportData = async (type) => {
-    setExporting(true);
-    let content = "Date,Task Name,Time Spent (seconds)\n";
-    tasks.forEach((task) => {
-      content += `${formatDate(task.date)},${task.name},${task.tspent || 0}\n`;
-    });
-
-    const fileUri = `${FileSystem.documentDirectory}task_history.${type}`;
-    await FileSystem.writeAsStringAsync(fileUri, content);
-
-    if (await Sharing.isAvailableAsync()) {
-      await Sharing.shareAsync(fileUri);
-    } else {
-      Alert.alert("Export Failed", "Sharing not available.");
-    }
-    setExporting(false);
-  };
-
   const sortedTasks = tasks.sort((a, b) => new Date(b.date) - new Date(a.date));
 
   return (
     <View className="flex-1 bg-gray-900 p-5">
-      <Text className="text-white text-2xl font-bold mb-5">Task History</Text>
+      <Text className="text-white text-2xl font-bold mb-4 ">Task History</Text>
+
+      {/* Task Stats */}
+      <Text className="text-white text-2xl font-bold mb-4">Max Streak: <Text className="text-orange-500"> {calculateStreaks()} days🔥</Text></Text>
 
       {/* Task List */}
       <ScrollView className="flex-1">
@@ -107,9 +89,6 @@ const TaskHistory = () => {
         )}
       </ScrollView>
 
-      {/* Task Stats */}
-      <Text className="text-white text-lg font-bold mt-4">Max Streak: {calculateStreaks()} days</Text>
-
       {/* Graph View */}
       {tasks.length > 0 && (
         <View className="mt-4">
@@ -137,16 +116,6 @@ const TaskHistory = () => {
           />
         </View>
       )}
-
-      {/* Export Buttons */}
-      <View className="flex-row justify-between mt-4">
-        <TouchableOpacity className="bg-blue-500 p-3 rounded-lg flex-1 mr-2" onPress={() => exportData("csv")} disabled={exporting}>
-          <Text className="text-white text-center text-lg">Export CSV</Text>
-        </TouchableOpacity>
-        <TouchableOpacity className="bg-blue-500 p-3 rounded-lg flex-1 ml-2" onPress={() => exportData("pdf")} disabled={exporting}>
-          <Text className="text-white text-center text-lg">Export PDF</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 };

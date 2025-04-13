@@ -256,7 +256,7 @@ const HomeScreen = () => {
               completedTasks.length > 3 ? (
                 <TouchableOpacity
                   className="py-2"
-                  onPress={() => router.push("../components/TaskHistory")}
+                  onPress={() => router.push("/TaskHistory")}
                 >
                   <Text className="text-center text-blue-400">
                     View all {completedTasks.length} completed tasks
