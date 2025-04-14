@@ -30,23 +30,34 @@ const HomeScreen = () => {
   }, []);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTasks((prevTasks) => {
-        const updated = prevTasks.map((task) =>
-          task.isRunning
-            ? { ...task, tspent: (task.tspent ?? 0) + 1 }
-            : task
-        );
-        AsyncStorage.setItem("tasks", JSON.stringify(updated)); // ✅ persist
-        return updated;
-      });
-  
-      if (activeId) {
-        setTotalTime((prevTime) => {
-          const updatedTime = prevTime + 1;
-          AsyncStorage.setItem("cumulativeTime", updatedTime.toString()); // ✅ persist
-          return updatedTime;
-        });
+    const interval = setInterval(async () => {
+      try {
+        // Only update tasks if there's an active task
+        if (activeId) {
+          // Get latest tasks from storage
+          const savedTasks = await AsyncStorage.getItem("tasks");
+          const parsedTasks = savedTasks ? JSON.parse(savedTasks) : [];
+        
+          // Update only the active task
+          const updated = parsedTasks.map((task) =>
+            task.id === activeId
+              ? { ...task, tspent: (task.tspent ?? 0) + 1 }
+              : task
+          );
+        
+          // Save and update state
+          await AsyncStorage.setItem("tasks", JSON.stringify(updated));
+          setTasks(updated);
+        
+          // Update total time
+          setTotalTime((prevTime) => {
+            const updatedTime = prevTime + 1;
+            AsyncStorage.setItem("cumulativeTime", updatedTime.toString());
+            return updatedTime;
+          });
+        }
+      } catch (error) {
+        console.error("Timer update error:", error);
       }
     }, 1000);
   
@@ -138,7 +149,16 @@ const HomeScreen = () => {
   };
 
   const modTask = (task) => {
-    router.push({ pathname: "../components/EditTask", params: task });
+    router.push({ 
+      pathname: "../components/EditTask", 
+      params: { 
+        id: task.id.toString(),
+        name: task.name,
+        description: task.description || "",
+        date: task.date,
+        compdate: task.compdate || task.completionDate
+      } 
+    });
   };
 
   const markDone = async (id) => {
