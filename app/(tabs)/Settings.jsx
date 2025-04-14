@@ -34,7 +34,7 @@ const Settings = () => {
       await AsyncStorage.setItem("region", region);
       await AsyncStorage.setItem("notifications", notificationsEnabled.toString());
       await AsyncStorage.setItem("autoMarkAfter", autoMarkAfter);
-      Alert.alert("Settings Saved");
+      Alert.alert("Succes","Settings Saved Successfully!");
     } catch (e) {
       console.error("Failed to save settings", e);
     }

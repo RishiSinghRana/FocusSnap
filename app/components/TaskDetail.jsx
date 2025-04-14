@@ -9,6 +9,15 @@ const TaskDetail = () => {
   const { id } = useLocalSearchParams();
   const [task, setTask] = useState(null);
 
+  const formatTime = (seconds) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hrs.toString().padStart(2, "0")}:${mins
+      .toString()
+      .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };  
+
   useEffect(() => {
     const loadTask = async () => {
       const saved = await AsyncStorage.getItem("tasks");
@@ -47,7 +56,7 @@ const TaskDetail = () => {
       <Text className="text-gray-300 mb-3">{name}</Text>
 
       <Text className="text-white text-lg font-semibold">Total Time Spent:</Text>
-      <Text className="text-gray-300 mb-3">{tspent || 0} seconds</Text>
+      <Text className="text-gray-300 mb-3">{formatTime(tspent || 0)}</Text>
 
       <Text className="text-white text-lg font-semibold">Start Date:</Text>
       <Text className="text-gray-300 mb-3">{date ? format(date) : "—"}</Text>

@@ -10,6 +10,15 @@ const HomeScreen = () => {
   const [totalTime, setTotalTime] = useState(0);
   const [activeId, setActiveId] = useState(null);
 
+  const formatTime = (seconds) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hrs.toString().padStart(2, "0")}:${mins
+      .toString()
+      .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
+
   useFocusEffect(
     React.useCallback(() => {
       getTasks();
@@ -22,16 +31,25 @@ const HomeScreen = () => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setTasks((prevTasks) =>
-        prevTasks.map((task) =>
+      setTasks((prevTasks) => {
+        const updated = prevTasks.map((task) =>
           task.isRunning
             ? { ...task, tspent: (task.tspent ?? 0) + 1 }
             : task
-        )
-      );
-      setTotalTime((prevTime) => prevTime + (activeId ? 1 : 0));
+        );
+        AsyncStorage.setItem("tasks", JSON.stringify(updated)); // ✅ persist
+        return updated;
+      });
+  
+      if (activeId) {
+        setTotalTime((prevTime) => {
+          const updatedTime = prevTime + 1;
+          AsyncStorage.setItem("cumulativeTime", updatedTime.toString()); // ✅ persist
+          return updatedTime;
+        });
+      }
     }, 1000);
-
+  
     return () => clearInterval(interval);
   }, [activeId]);
 
@@ -40,6 +58,8 @@ const HomeScreen = () => {
       const savedTasks = await AsyncStorage.getItem("tasks");
       const parsedTasks = savedTasks ? JSON.parse(savedTasks) : [];
       setTasks(parsedTasks);
+      const active = parsedTasks.find(task => task.isRunning);
+      setActiveId(active?.id ?? null);
     } catch (error) {
       console.error("Error fetching tasks", error);
     }
@@ -64,27 +84,27 @@ const HomeScreen = () => {
     let result = await ImagePicker.launchCameraAsync({ allowsEditing: true, quality: 1 });
     if (!result.canceled) {
       setActiveId(id);
-      setTasks((prev) =>
-        prev.map((task) =>
-          task.id === id
-            ? {
-                ...task,
-                isRunning: true,
-                hasStartedOnce: true,
-                photo: result.assets[0].uri,
-                photos: [...(task.photos || []), result.assets[0].uri],
-              }
-            : task
-        )
+      const updatedTasks = tasks.map((task) =>
+        task.id === id
+          ? {
+              ...task,
+              isRunning: true,
+              hasStartedOnce: true,
+              photo: result.assets[0].uri,
+              photos: [...(task.photos || []), result.assets[0].uri],
+            }
+          : task
       );
+      await storeTasks(updatedTasks);
     }
   };
 
-  const endTask = (id) => {
+  const endTask = async (id) => {
     setActiveId(null);
-    setTasks((prev) =>
-      prev.map((task) => (task.id === id ? { ...task, isRunning: false } : task))
+    const updatedTasks = tasks.map((task) =>
+      task.id === id ? { ...task, isRunning: false } : task
     );
+    await storeTasks(updatedTasks);
   };
 
   const contTask = async (id) => {
@@ -97,18 +117,17 @@ const HomeScreen = () => {
 
     if (!result.canceled) {
       setActiveId(id);
-      setTasks((prev) =>
-        prev.map((task) =>
-          task.id === id
-            ? {
-                ...task,
-                isRunning: true,
-                photo: result.assets[0].uri,
-                photos: [...(task.photos || []), result.assets[0].uri],
-              }
-            : task
-        )
+      const updatedTasks = tasks.map((task) =>
+        task.id === id
+          ? {
+              ...task,
+              isRunning: true,
+              photo: result.assets[0].uri,
+              photos: [...(task.photos || []), result.assets[0].uri],
+            }
+          : task
       );
+      await storeTasks(updatedTasks);
     }
   };
 
@@ -122,9 +141,21 @@ const HomeScreen = () => {
     router.push({ pathname: "../components/EditTask", params: task });
   };
 
-  const markTaskDone = async (id) => {
+  const markDone = async (id) => {
     const updatedTasks = tasks.map(task =>
-      task.id === id ? { ...task, isCompleted: true, completedAt: new Date().toISOString() } : task
+      task.id === id
+        ? { ...task, isCompleted: true, completedAt: new Date().toISOString(), isRunning: false }
+        : task
+    );
+    setActiveId(null);
+    await storeTasks(updatedTasks);
+  };
+
+  const markUndo = async (id) => {
+    const updatedTasks = tasks.map(task =>
+      task.id === id
+        ? { ...task, isCompleted: false, completedAt: null }
+        : task
     );
     await storeTasks(updatedTasks);
   };
@@ -150,7 +181,7 @@ const HomeScreen = () => {
         <Text className="text-gray-400">
           Completion Date: {dayjs(item.completionDate || item.compdate).format("DD MMM YYYY")}
         </Text>
-        <Text className="text-gray-400">Time Spent: {item.tspent || 0}s</Text>
+        <Text className="text-gray-400">Time Spent: {formatTime(item.tspent || 0)}</Text>
       </View>
 
       <View className="flex-row items-center">
@@ -164,18 +195,24 @@ const HomeScreen = () => {
           </TouchableOpacity>
         )}
 
-        {showDoneButton && !item.isRunning && !restrictToEditRemoveOnly && (
-          <TouchableOpacity className="mx-1" onPress={() => markTaskDone(item.id)}>
+        {showDoneButton && !item.isRunning && !restrictToEditRemoveOnly && !item.isCompleted && (
+          <TouchableOpacity className="mx-1" onPress={() => markDone(item.id)}>
             <Text className="text-2xl text-green-500">✓</Text>
+          </TouchableOpacity>
+        )}
+
+        {item.isCompleted && (
+          <TouchableOpacity className="mx-1" onPress={() => markUndo(item.id)}>
+            <Text className="text-2xl">↩️</Text>
           </TouchableOpacity>
         )}
       </View>
 
-      {item.photo ? (
+      {item.photo && (
         <Image source={{ uri: item.photo }} className="w-10 h-10 rounded-lg ml-2" />
-      ) : null}
+      )}
 
-      {!restrictToEditRemoveOnly && (
+      {!restrictToEditRemoveOnly && !item.isCompleted && (
         <View className="ml-2">
           {!item.hasStartedOnce && (
             <TouchableOpacity onPress={() => beginTask(item.id)}>
@@ -202,7 +239,7 @@ const HomeScreen = () => {
   return (
     <View className="flex-1 bg-gray-900 p-5">
       <Text className="text-white text-2xl font-bold text-center mb-5">
-        Total Time: {totalTime}s
+        Total Time: {formatTime(totalTime)}
       </Text>
 
       <Text className="text-white text-lg font-bold mb-3">
@@ -249,21 +286,9 @@ const HomeScreen = () => {
             Completed Tasks <Text className="text-green-500">({completedTasks.length})</Text>
           </Text>
           <FlatList
-            data={completedTasks.slice(0, 3)}
+            data={completedTasks}
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => renderTaskItem(item, false, true)}
-            ListFooterComponent={
-              completedTasks.length > 3 ? (
-                <TouchableOpacity
-                  className="py-2"
-                  onPress={() => router.push("/TaskHistory")}
-                >
-                  <Text className="text-center text-blue-400">
-                    View all {completedTasks.length} completed tasks
-                  </Text>
-                </TouchableOpacity>
-              ) : null
-            }
           />
         </>
       )}

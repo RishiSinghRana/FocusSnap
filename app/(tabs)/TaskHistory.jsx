@@ -13,6 +13,15 @@ const TaskHistory = () => {
   const [tasks, setTasks] = useState([]);
   const router = useRouter();
 
+  const formatTime = (seconds) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hrs.toString().padStart(2, "0")}:${mins
+      .toString()
+      .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
+
   useEffect(() => {
     loadTasks();
   }, []);
@@ -76,7 +85,7 @@ const TaskHistory = () => {
                 <Text className="text-gray-400">
                   Completion Date: {task.completionDate ? formatDate(task.completionDate) : formatDate(task.compdate)}
                 </Text>
-                <Text className="text-gray-400">Time Spent: {task.tspent || 0}s</Text>
+                <Text className="text-gray-400">Time Spent: {formatTime(task.tspent || 0)}</Text>
               </View>
               {task.photo && (
                 <Image source={{ uri: task.photo }} className="w-10 h-10 rounded-lg mt-2" />
