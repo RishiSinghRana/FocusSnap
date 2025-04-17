@@ -48,7 +48,8 @@ A mobile task tracking app built with **React Native** and **Expo** that helps u
 
 ```
 app/
-├── global.css           # Tailwind CSS
+├── EditProfile.jsx        # Edit Profile screen
+├── global.css             # Tailwind CSS
 ├── _layout.jsx            # Root Layout
 ├── (tabs)/
 │   ├── _layout.jsx        # Tab navigator layout
@@ -92,13 +93,10 @@ npx expo start
 ## 🛠 To Do
 
 - [ ] Add user authentication
-- [ ] Export reports
-- [ ] Add Profile Screen
 - [ ] Make a Calendar to show accumulated time (Days/Months/Year)
 - [ ] Add push notifications for upcoming deadlines
 - [ ] Design of the app (Only basic functionality is there right now)
 - [ ] Reward System with Streaks (Possibly Badges, User Icons and Borders)
-- [ ] Designing of the App
 
 ---
 
@@ -116,7 +114,7 @@ This project is licensed under the MIT License.
 
 ## 💬 Contact
 
-Created with ❤️ by Rishi Singh Rana
+Created with ❤️ by Rishi Singh Rana <br>
 Shoutout 🎉 to Ayush Kaushik for the contribution in TaskHistory Functionality
 📧 rishisinghrana08@gmail.com  
 🔗 [LinkedIn](https://www.linkedin.com/in/rishi-singh-rana-43ab78288) | [GitHub](https://github.com/RishiSinghRana)
