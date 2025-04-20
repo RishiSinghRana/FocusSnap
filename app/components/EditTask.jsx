@@ -1,143 +1,184 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
+// app/components/EditTask.jsx
+import React, { useEffect, useState } from "react";
+import { View, Text, ScrollView, TextInput, Button, StyleSheet } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useLocalSearchParams, router } from "expo-router";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import dayjs from "dayjs";
 
 const EditTask = () => {
-  const params = useLocalSearchParams();
-  // Initialize with empty values first
-  const [tName, setTaskName] = useState("");
-  const [taskDesc, setTaskDesc] = useState("");
-  const [taskDate, setTaskDate] = useState(new Date());
-  const [compDate, setCompDate] = useState(new Date());
-  const [showTDatePick, setTDatePick] = useState(false);
-  const [showCompPick, setCompPick] = useState(false);
-  const [taskId, setTaskId] = useState(null);
-  
-  // Load task data from storage based on the ID
+  const { id } = useLocalSearchParams();
+  const router = useRouter();
+  const [task, setTask] = useState(null);
+  const [name, setName] = useState("");
+  const [tspent, setTspent] = useState(0);
+  const [date, setDate] = useState("");
+  const [completionDate, setCompletionDate] = useState("");
+  const [compdate, setCompdate] = useState("");
+  const [completedAt, setCompletedAt] = useState("");
+
   useEffect(() => {
-    const loadTaskData = async () => {
-      try {
-        // Get stored tasks
-        const storedTasks = await AsyncStorage.getItem("tasks");
-        if (!storedTasks) return;
-        
-        const tasks = JSON.parse(storedTasks);
-        // Find the task with the matching ID
-        const taskToEdit = tasks.find(t => t.id.toString() === params.id?.toString());
-        
-        if (taskToEdit) {
-          // Set state with the found task data
-          setTaskName(taskToEdit.name || "");
-          setTaskDesc(taskToEdit.description || "");
-          setTaskDate(dayjs(taskToEdit.date).toDate());
-          setCompDate(dayjs(taskToEdit.compdate || taskToEdit.completionDate).toDate());
-          setTaskId(taskToEdit.id);
-        } else {
-          Alert.alert("Error", "Task not found!");
-          router.replace("/");
-        }
-      } catch (error) {
-        console.error("Error loading task:", error);
-        Alert.alert("Error", "Failed to load task data");
+    const loadTask = async () => {
+      const saved = await AsyncStorage.getItem("tasks");
+      const parsed = saved ? JSON.parse(saved) : [];
+      const selected = parsed.find((task) => task.id.toString() === id);
+      if (selected) {
+        setTask(selected);
+        setName(selected.name);
+        setTspent(selected.tspent || 0);
+        setDate(selected.date);
+        setCompletionDate(selected.completionDate);
+        setCompdate(selected.compdate);
+        setCompletedAt(selected.completedAt);
       }
     };
-    
-    loadTaskData();
-  }, [params.id]);
+    loadTask();
+  }, [id]);
 
-  const updateTask = async () => {
-    if (!taskId) {
-      Alert.alert("Error", "Task ID is missing");
-      return;
-    }
-    
-    try {
-      const storedTasks = await AsyncStorage.getItem("tasks");
-      const tasks = storedTasks ? JSON.parse(storedTasks) : [];
- 
-      const updatedTasks = tasks.map((t) =>
-        t.id.toString() === taskId.toString()
-          ? {
-              ...t, // Preserve all original properties
-              name: tName,
-              description: taskDesc,
-              date: dayjs(taskDate).format("YYYY-MM-DD"),
-              compdate: dayjs(compDate).format("YYYY-MM-DD"),
-            }
-          : t
-      );  
-      
-      await AsyncStorage.setItem("tasks", JSON.stringify(updatedTasks));
-      Alert.alert("Success", "Task updated successfully!");
-      router.replace("/");
-    } catch (error) {
-      console.error("Error updating task", error);
-      Alert.alert("Error", "Failed to update task");
-    }
+  const handleSave = async () => {
+    const saved = await AsyncStorage.getItem("tasks");
+    const parsed = saved ? JSON.parse(saved) : [];
+    const updatedTasks = parsed.map((task) =>
+      task.id.toString() === id ? { ...task, name, tspent, date, completionDate, compdate, completedAt } : task
+    );
+    await AsyncStorage.setItem("tasks", JSON.stringify(updatedTasks));
+    router.push(`/taskDetail?id=${id}`); // Navigate back to task detail after saving
   };
- 
+
+  if (!task) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.loadingText}>Loading task...</Text>
+      </View>
+    );
+  }
+
   return (
-    <View className="flex-1 bg-gray-900 p-5">
-      <Text className="text-white text-2xl font-bold text-center mb-5">Edit Task</Text>
-      {/*Task Name */}
-      <TextInput
-        className="bg-gray-800 text-white p-3 rounded-lg mb-3"
-        value={tName}
-        onChangeText={setTaskName}
-        placeholder="Task name"
-        placeholderTextColor="#666"
-      />
-      {/*Task Description */}
-      <TextInput
-        className="bg-gray-800 text-white p-3 rounded-lg mb-3"
-        value={taskDesc}
-        onChangeText={setTaskDesc}
-        multiline
-        placeholder="Task description"
-        placeholderTextColor="#666"
-      />
-      {/* Task Date Picker */}
-      <TouchableOpacity onPress={() => setTDatePick(true)} className="bg-blue-600 p-3 rounded-lg mb-3">
-        <Text className="text-white text-center">
-          Task Date: {dayjs(taskDate).format("YYYY-MM-DD")}
-        </Text>
-      </TouchableOpacity>
-      {showTDatePick && (
-        <DateTimePicker
-          value={taskDate}
-          mode="date"
-          display="default"
-          onChange={(event, date) => {
-            setTDatePick(false);
-            if (date) setTaskDate(date);
-          }}
-        />
-      )}
-      {/* Completion Date Picker */}
-      <TouchableOpacity onPress={() => setCompPick(true)} className="bg-green-600 p-3 rounded-lg mb-3">
-        <Text className="text-white text-center">
-          Completion Date: {dayjs(compDate).format("YYYY-MM-DD")}
-        </Text>
-      </TouchableOpacity>
-      {showCompPick && (
-        <DateTimePicker
-          value={compDate}
-          mode="date"
-          display="default"
-          onChange={(event, date) => {
-            setCompPick(false);
-            if (date) setCompDate(date);
-          }}
-        />
-      )}
-      <TouchableOpacity onPress={updateTask} className="bg-purple-600 p-3 rounded-lg mt-5">
-        <Text className="text-white text-center text-lg">Update Task</Text>
-      </TouchableOpacity>
-    </View>
+    <ScrollView style={styles.scrollContainer}>
+      <View style={styles.card}>
+        <Text style={styles.title}>Edit Task</Text>
+
+        <View style={styles.cardSection}>
+          <Text style={styles.label}>Name:</Text>
+          <TextInput
+            style={styles.input}
+            value={name}
+            onChangeText={setName}
+            placeholder="Enter task name"
+            placeholderTextColor="#A0AEC0"
+          />
+        </View>
+
+        <View style={styles.cardSection}>
+          <Text style={styles.label}>Total Time Spent:</Text>
+          <TextInput
+            style={styles.input}
+            value={String(tspent)}
+            onChangeText={(text) => setTspent(Number(text))}
+            keyboardType="numeric"
+            placeholder="Enter time spent"
+            placeholderTextColor="#A0AEC0"
+          />
+        </View>
+
+        <View style={styles.cardSection}>
+          <Text style={styles.label}>Start Date:</Text>
+          <TextInput
+            style={styles.input}
+            value={date}
+            onChangeText={setDate}
+            placeholder="Enter start date (DD/MM/YYYY)"
+            placeholderTextColor="#A0AEC0"
+          />
+        </View>
+
+        <View style={styles.cardSection}>
+          <Text style={styles.label}>Completion Date:</Text>
+          <TextInput
+            style={styles.input}
+            value={completionDate}
+            onChangeText={setCompletionDate}
+            placeholder="Enter completion date (DD/MM/YYYY)"
+            placeholderTextColor="#A0AEC0"
+          />
+        </View>
+
+        <View style={styles.cardSection}>
+          <Text style={styles.label}>Marked as Done:</Text>
+          <TextInput
+            style={styles.input}
+            value={completedAt}
+            onChangeText={setCompletedAt}
+            placeholder="Enter done date (DD/MM/YYYY)"
+            placeholderTextColor="#A0AEC0"
+          />
+        </View>
+
+        <View style={styles.cardSection}>
+          <Text style={styles.label}>Completion Status:</Text>
+          <TextInput
+            style={styles.input}
+            value={compdate}
+            onChangeText={setCompdate}
+            placeholder="Enter completion status (optional)"
+            placeholderTextColor="#A0AEC0"
+          />
+        </View>
+
+        <View style={styles.cardSection}>
+          <Button title="Save" onPress={handleSave} color="#4CAF50" />
+        </View>
+      </View>
+    </ScrollView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#1F2937",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  loadingText: {
+    color: "#fff",
+    fontSize: 18,
+    textAlign: "center",
+  },
+  scrollContainer: {
+    flex: 1,
+    backgroundColor: "#1F2937",
+    padding: 20,
+  },
+  card: {
+    backgroundColor: "#2D3748",
+    borderRadius: 10,
+    padding: 20,
+    marginBottom: 20,
+  },
+  title: {
+    color: "#fff",
+    fontSize: 24,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  cardSection: {
+    marginBottom: 15,
+  },
+  label: {
+    color: "#E2E8F0",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  input: {
+    backgroundColor: "#4A5568",
+    color: "#E2E8F0",
+    fontSize: 16,
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 5,
+  },
+});
 
 export default EditTask;
