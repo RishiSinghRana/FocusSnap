@@ -1,6 +1,6 @@
 // app/components/TaskDetail.jsx
 import React, { useEffect, useState } from "react";
-import { View, Text, ScrollView, Image } from "react-native";
+import { View, Text, ScrollView, Image, StyleSheet } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import dayjs from "dayjs";
@@ -16,7 +16,7 @@ const TaskDetail = () => {
     return `${hrs.toString().padStart(2, "0")}:${mins
       .toString()
       .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };  
+  };
 
   useEffect(() => {
     const loadTask = async () => {
@@ -30,8 +30,8 @@ const TaskDetail = () => {
 
   if (!task) {
     return (
-      <View className="flex-1 bg-gray-900 p-5">
-        <Text className="text-white text-center">Loading task...</Text>
+      <View style={styles.container}>
+        <Text style={styles.loadingText}>Loading task...</Text>
       </View>
     );
   }
@@ -49,42 +49,116 @@ const TaskDetail = () => {
   const format = (d) => dayjs(d).format("DD MMM YYYY");
 
   return (
-    <ScrollView className="flex-1 bg-gray-900 p-5">
-      <Text className="text-white text-2xl font-bold mb-5 text-center">Task Details</Text>
+    <ScrollView style={styles.scrollContainer}>
+      <View style={styles.card}>
+        <Text style={styles.title}>Task Details</Text>
 
-      <Text className="text-white text-lg font-semibold">Name:</Text>
-      <Text className="text-gray-300 mb-3">{name}</Text>
-
-      <Text className="text-white text-lg font-semibold">Total Time Spent:</Text>
-      <Text className="text-gray-300 mb-3">{formatTime(tspent || 0)}</Text>
-
-      <Text className="text-white text-lg font-semibold">Start Date:</Text>
-      <Text className="text-gray-300 mb-3">{date ? format(date) : "—"}</Text>
-
-      <Text className="text-white text-lg font-semibold">Completion Date:</Text>
-      <Text className="text-gray-300 mb-3">
-        {completionDate ? format(completionDate) : compdate ? format(compdate) : "—"}
-      </Text>
-
-      <Text className="text-white text-lg font-semibold">Marked as Done:</Text>
-      <Text className="text-gray-300 mb-3">{completedAt ? format(completedAt) : "—"}</Text>
-
-      <Text className="text-white text-lg font-semibold mb-2">Photos:</Text>
-      {photos.length > 0 ? (
-        <View className="flex-row flex-wrap gap-3">
-          {photos.map((uri, index) => (
-            <Image
-              key={index}
-              source={{ uri }}
-              className="w-24 h-24 rounded-lg mb-3 mr-3"
-            />
-          ))}
+        <View style={styles.cardSection}>
+          <Text style={styles.label}>Name:</Text>
+          <Text style={styles.text}>{name}</Text>
         </View>
-      ) : (
-        <Text className="text-gray-400">No photos available</Text>
-      )}
+
+        <View style={styles.cardSection}>
+          <Text style={styles.label}>Total Time Spent:</Text>
+          <Text style={styles.text}>{formatTime(tspent || 0)}</Text>
+        </View>
+
+        <View style={styles.cardSection}>
+          <Text style={styles.label}>Start Date:</Text>
+          <Text style={styles.text}>{date ? format(date) : "—"}</Text>
+        </View>
+
+        <View style={styles.cardSection}>
+          <Text style={styles.label}>Completion Date:</Text>
+          <Text style={styles.text}>
+            {completionDate ? format(completionDate) : compdate ? format(compdate) : "—"}
+          </Text>
+        </View>
+
+        <View style={styles.cardSection}>
+          <Text style={styles.label}>Marked as Done:</Text>
+          <Text style={styles.text}>{completedAt ? format(completedAt) : "—"}</Text>
+        </View>
+
+        <View style={styles.cardSection}>
+          <Text style={styles.label}>Photos:</Text>
+          {photos.length > 0 ? (
+            <View style={styles.photosContainer}>
+              {photos.map((uri, index) => (
+                <Image
+                  key={index}
+                  source={{ uri }}
+                  style={styles.photo}
+                />
+              ))}
+            </View>
+          ) : (
+            <Text style={styles.noPhotos}>No photos available</Text>
+          )}
+        </View>
+      </View>
     </ScrollView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#1F2937", // Dark background
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  loadingText: {
+    color: "#fff",
+    fontSize: 18,
+    textAlign: "center",
+  },
+  scrollContainer: {
+    flex: 1,
+    backgroundColor: "#1F2937",
+    padding: 20,
+  },
+  card: {
+    backgroundColor: "#2D3748", // Card background color
+    borderRadius: 10,
+    padding: 20,
+    marginBottom: 20,
+  },
+  title: {
+    color: "#fff",
+    fontSize: 24,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  cardSection: {
+    marginBottom: 15,
+  },
+  label: {
+    color: "#E2E8F0", // Light gray text for labels
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  text: {
+    color: "#CBD5E0", // Lighter gray text
+    fontSize: 16,
+    marginTop: 5,
+  },
+  photosContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  photo: {
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  noPhotos: {
+    color: "#A0AEC0", // Medium gray for no photos
+  },
+});
 
 export default TaskDetail;
